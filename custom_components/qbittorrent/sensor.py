@@ -104,5 +104,13 @@ class QBittorrentSensor(QBittorrentEntity, SensorEntity):
         if self.entity_description.key == "upload_speed":
             return round(transfer.get("up_info_speed", 0) / 1_000_000, 2)
         if self.entity_description.key == "free_space":
-            return round(transfer.get("free_space_on_disk", 0) / 1_000_000_000, 2)
+            # qBittorrent exposes this field in sync/maindata.server_state.
+            # Keep the transfer.info fallback for older/non-standard servers.
+            server_state = data["main"].get("server_state", {})
+            free_space = server_state.get("free_space_on_disk")
+            if free_space is None:
+                free_space = transfer.get("free_space_on_disk")
+            if free_space is None:
+                return None
+            return round(float(free_space) / 1_000_000_000, 2)
         return None
