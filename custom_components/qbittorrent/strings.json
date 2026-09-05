@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to qBittorrent",
+        "description": "Enter the qBittorrent WebUI address and credentials.",
+        "data": {
+          "url": "WebUI URL",
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to qBittorrent.",
+      "invalid_auth": "Invalid qBittorrent username or password.",
+      "unknown": "Unexpected error. Check the logs."
+    },
+    "abort": {
+      "already_configured": "This qBittorrent instance is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "qBittorrent options",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  }
+}
