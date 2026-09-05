@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfDataRate, UnitOfInformation
 from homeassistant.core import HomeAssistant
@@ -15,35 +18,39 @@ from .coordinator import QBittorrentCoordinator
 from .entity import QBittorrentEntity
 
 
-@dataclass(frozen=True)
-class SensorDescription:
-    key: str
-    name: str
-    icon: str
-    unit: str | None = None
-    device_class: SensorDeviceClass | None = None
-    state_class: SensorStateClass | None = SensorStateClass.MEASUREMENT
-
-
 SENSORS = (
-    SensorDescription("status", "Status", "mdi:transit-connection-variant", state_class=None),
-    SensorDescription("total", "Total torrents", "mdi:download-multiple", state_class=None),
-    SensorDescription("downloading", "Downloading", "mdi:download", state_class=None),
-    SensorDescription("seeding", "Seeding", "mdi:upload", state_class=None),
-    SensorDescription("paused", "Paused", "mdi:pause-circle", state_class=None),
-    SensorDescription("completed", "Completed", "mdi:check-circle", state_class=None),
-    SensorDescription(
-        "download_speed", "Download speed", "mdi:download", UnitOfDataRate.MEGABYTES_PER_SECOND
+    SensorEntityDescription(
+        key="status", name="Status", icon="mdi:transit-connection-variant"
     ),
-    SensorDescription(
-        "upload_speed", "Upload speed", "mdi:upload", UnitOfDataRate.MEGABYTES_PER_SECOND
+    SensorEntityDescription(
+        key="total", name="Total torrents", icon="mdi:download-multiple"
     ),
-    SensorDescription(
-        "free_space",
-        "Free space",
-        "mdi:harddisk",
-        UnitOfInformation.GIGABYTES,
-        SensorDeviceClass.DATA_SIZE,
+    SensorEntityDescription(key="downloading", name="Downloading", icon="mdi:download"),
+    SensorEntityDescription(key="seeding", name="Seeding", icon="mdi:upload"),
+    SensorEntityDescription(key="paused", name="Paused", icon="mdi:pause-circle"),
+    SensorEntityDescription(key="completed", name="Completed", icon="mdi:check-circle"),
+    SensorEntityDescription(
+        key="download_speed",
+        name="Download speed",
+        icon="mdi:download",
+        native_unit_of_measurement=UnitOfDataRate.MEGABYTES_PER_SECOND,
+        device_class=SensorDeviceClass.DATA_RATE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="upload_speed",
+        name="Upload speed",
+        icon="mdi:upload",
+        native_unit_of_measurement=UnitOfDataRate.MEGABYTES_PER_SECOND,
+        device_class=SensorDeviceClass.DATA_RATE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="free_space",
+        name="Free space",
+        icon="mdi:harddisk",
+        native_unit_of_measurement=UnitOfInformation.GIGABYTES,
+        device_class=SensorDeviceClass.DATA_SIZE,
     ),
 )
 
@@ -53,18 +60,20 @@ async def async_setup_entry(
 ) -> None:
     """Set up qBittorrent sensors."""
     coordinator: QBittorrentCoordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
-    async_add_entities(QBittorrentSensor(coordinator, description) for description in SENSORS)
+    async_add_entities([QBittorrentSensor(coordinator, description) for description in SENSORS])
 
 
 class QBittorrentSensor(QBittorrentEntity, SensorEntity):
     """A qBittorrent statistic sensor."""
 
-    def __init__(self, coordinator: QBittorrentCoordinator, description: SensorDescription) -> None:
+    def __init__(
+        self, coordinator: QBittorrentCoordinator, description: SensorEntityDescription
+    ) -> None:
         super().__init__(coordinator, description.key)
         self.entity_description = description
         self._attr_name = description.name
         self._attr_icon = description.icon
-        self._attr_native_unit_of_measurement = description.unit
+        self._attr_native_unit_of_measurement = description.native_unit_of_measurement
         self._attr_device_class = description.device_class
         self._attr_state_class = description.state_class
         self._attr_entity_category = (
