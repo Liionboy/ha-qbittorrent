@@ -70,7 +70,12 @@ class QBittorrentApiTests(unittest.TestCase):
         self.assertEqual(asyncio.run(run()), {"torrents": {}})
         self.assertEqual(session.calls[0][1], "http://qbit:8080/api/v2/auth/login")
         self.assertEqual(session.calls[0][2]["data"]["username"], "user")
+        self.assertEqual(
+            session.calls[0][2]["headers"],
+            {"Origin": "http://qbit:8080", "Referer": "http://qbit:8080"},
+        )
         self.assertEqual(session.calls[1][2]["params"], {"rid": 0})
+        self.assertEqual(session.calls[1][2]["headers"], session.calls[0][2]["headers"])
 
     def test_login_rejects_non_ok_response(self):
         api = QBittorrentApi(FakeSession([FakeResponse(body="Fails."),]), "http://qbit", "u", "p")

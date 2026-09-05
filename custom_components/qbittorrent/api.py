@@ -20,6 +20,10 @@ class QBittorrentApi:
         self._base_url = url.rstrip("/")
         self._username = username
         self._password = password
+        # qBittorrent rejects WebUI requests without a matching Origin/Referer.
+        # This is required by the WebUI's CSRF protection, especially behind a
+        # reverse proxy or when the WebUI is bound to a non-default port.
+        self._headers = {"Origin": self._base_url, "Referer": self._base_url}
 
     async def async_login(self) -> None:
         """Log in and keep the session cookie for subsequent requests."""
@@ -27,6 +31,7 @@ class QBittorrentApi:
             async with self._session.post(
                 f"{self._base_url}/api/v2/auth/login",
                 data={"username": self._username, "password": self._password},
+                headers=self._headers,
             ) as response:
                 body = await response.text()
         except (ClientError, TimeoutError) as err:
@@ -46,7 +51,10 @@ class QBittorrentApi:
         """Call an API endpoint and decode its JSON response when present."""
         try:
             async with getattr(self._session, method.lower())(
-                f"{self._base_url}/api/v2/{endpoint}", params=params, data=data
+                f"{self._base_url}/api/v2/{endpoint}",
+                params=params,
+                data=data,
+                headers=self._headers,
             ) as response:
                 if response.status in (401, 403):
                     raise QBittorrentApiError("qBittorrent session expired")
