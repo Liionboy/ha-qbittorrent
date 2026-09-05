@@ -138,7 +138,10 @@ class QBittorrentSensor(QBittorrentEntity, SensorEntity):
             if upload:
                 return "Seeding"
             return "Idle"
-        if self.entity_description.key in data["counts"]:
+        if (
+            self.entity_description.key in data["counts"]
+            and self.entity_description.key != "total_size"
+        ):
             return data["counts"][self.entity_description.key]
         transfer = data["transfer"]
         if self.entity_description.key == "download_speed":
