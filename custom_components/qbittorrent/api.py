@@ -99,6 +99,14 @@ class QBittorrentApi:
         except (TypeError, ValueError) as err:
             raise QBittorrentApiError("Invalid download limit response") from err
 
+    async def async_get_upload_limit(self) -> int:
+        """Return global upload limit in bytes per second."""
+        result = await self.async_request("transfer/uploadLimit")
+        try:
+            return int(result)
+        except (TypeError, ValueError) as err:
+            raise QBittorrentApiError("Invalid upload limit response") from err
+
     async def async_set_download_limit(self, limit: int) -> None:
         """Set global download limit in bytes per second (zero means unlimited)."""
         await self.async_request(

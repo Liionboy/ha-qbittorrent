@@ -5,13 +5,15 @@
 
 Modern Home Assistant custom integration for the qBittorrent WebUI API v2. It is a clean-room implementation inspired by the older YAML component at [radsonpatrick/qbittorrent_custom_component](https://github.com/radsonpatrick/qbittorrent_custom_component), with no code copied from it.
 
-Current release: **1.0.4**.
+Current release: **1.1.0**.
 
 ## Features
 
 - UI configuration through **Settings → Devices & services → Add integration**.
 - Sensors for total, downloading, seeding, paused and completed torrents.
-- Download/upload speed and free disk space sensors.
+- Sensors for download/upload speed, active, stalled and errored torrents, DHT
+  nodes, session traffic, total torrent size, global limits and free disk space.
+- Additional global transfer attributes on the Status sensor.
 - Switch for qBittorrent alternative speed limits.
 - Number entity for the global download limit (MB/s; `0` means unlimited).
 - Local polling with configurable interval (15–300 seconds).

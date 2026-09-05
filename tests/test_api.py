@@ -89,6 +89,11 @@ class QBittorrentApiTests(unittest.TestCase):
         with self.assertRaises(QBittorrentApiError):
             asyncio.run(api.async_request("transfer/info"))
 
+    def test_get_upload_limit(self):
+        api = QBittorrentApi(FakeSession([FakeResponse(body="2048")]), "http://qbit", "u", "p")
+
+        self.assertEqual(asyncio.run(api.async_get_upload_limit()), 2048)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -29,6 +29,34 @@ SENSORS = (
     SensorEntityDescription(key="seeding", name="Seeding", icon="mdi:upload"),
     SensorEntityDescription(key="paused", name="Paused", icon="mdi:pause-circle"),
     SensorEntityDescription(key="completed", name="Completed", icon="mdi:check-circle"),
+    SensorEntityDescription(key="active", name="Active torrents", icon="mdi:play-circle"),
+    SensorEntityDescription(key="stalled", name="Stalled torrents", icon="mdi:pause-octagon"),
+    SensorEntityDescription(key="errored", name="Errored torrents", icon="mdi:alert-circle"),
+    SensorEntityDescription(key="dht_nodes", name="DHT nodes", icon="mdi:lan-connect"),
+    SensorEntityDescription(
+        key="session_downloaded",
+        name="Session downloaded",
+        icon="mdi:download-network",
+        native_unit_of_measurement=UnitOfInformation.GIGABYTES,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="session_uploaded",
+        name="Session uploaded",
+        icon="mdi:upload-network",
+        native_unit_of_measurement=UnitOfInformation.GIGABYTES,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="total_size",
+        name="Total torrent size",
+        icon="mdi:database",
+        native_unit_of_measurement=UnitOfInformation.GIGABYTES,
+        device_class=SensorDeviceClass.DATA_SIZE,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     SensorEntityDescription(
         key="download_speed",
         name="Download speed",
@@ -44,6 +72,20 @@ SENSORS = (
         native_unit_of_measurement=UnitOfDataRate.MEGABYTES_PER_SECOND,
         device_class=SensorDeviceClass.DATA_RATE,
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="download_limit",
+        name="Download limit",
+        icon="mdi:download-lock",
+        native_unit_of_measurement=UnitOfDataRate.MEGABYTES_PER_SECOND,
+        device_class=SensorDeviceClass.DATA_RATE,
+    ),
+    SensorEntityDescription(
+        key="upload_limit",
+        name="Upload limit",
+        icon="mdi:upload-lock",
+        native_unit_of_measurement=UnitOfDataRate.MEGABYTES_PER_SECOND,
+        device_class=SensorDeviceClass.DATA_RATE,
     ),
     SensorEntityDescription(
         key="free_space",
@@ -103,6 +145,18 @@ class QBittorrentSensor(QBittorrentEntity, SensorEntity):
             return round(transfer.get("dl_info_speed", 0) / 1_000_000, 2)
         if self.entity_description.key == "upload_speed":
             return round(transfer.get("up_info_speed", 0) / 1_000_000, 2)
+        if self.entity_description.key == "dht_nodes":
+            return transfer.get("dht_nodes", 0)
+        if self.entity_description.key == "session_downloaded":
+            return round(transfer.get("dl_info_data", 0) / 1_000_000_000, 2)
+        if self.entity_description.key == "session_uploaded":
+            return round(transfer.get("up_info_data", 0) / 1_000_000_000, 2)
+        if self.entity_description.key == "total_size":
+            return round(data["counts"].get("total_size", 0) / 1_000_000_000, 2)
+        if self.entity_description.key == "download_limit":
+            return round(data.get("download_limit", 0) / 1_000_000, 2)
+        if self.entity_description.key == "upload_limit":
+            return round(data.get("upload_limit", 0) / 1_000_000, 2)
         if self.entity_description.key == "free_space":
             # qBittorrent exposes this field in sync/maindata.server_state.
             # Keep the transfer.info fallback for older/non-standard servers.
@@ -114,3 +168,27 @@ class QBittorrentSensor(QBittorrentEntity, SensorEntity):
                 return None
             return round(float(free_space) / 1_000_000_000, 2)
         return None
+
+    @property
+    def extra_state_attributes(self):
+        """Return useful global qBittorrent data on the status sensor."""
+        if self.entity_description.key != "status":
+            return None
+
+        data = self.coordinator.data
+        transfer = data["transfer"]
+        counts = data["counts"]
+        return {
+            "connection_status": transfer.get("connection_status"),
+            "dht_nodes": transfer.get("dht_nodes", 0),
+            "queueing": transfer.get("queueing"),
+            "alternative_speed_limits": data.get("alt_speed_limits", False),
+            "download_limit_mb_s": round(data.get("download_limit", 0) / 1_000_000, 2),
+            "upload_limit_mb_s": round(data.get("upload_limit", 0) / 1_000_000, 2),
+            "session_downloaded_gb": round(transfer.get("dl_info_data", 0) / 1_000_000_000, 2),
+            "session_uploaded_gb": round(transfer.get("up_info_data", 0) / 1_000_000_000, 2),
+            "active_torrents": counts["active"],
+            "stalled_torrents": counts["stalled"],
+            "errored_torrents": counts["errored"],
+            "total_size_gb": round(counts["total_size"] / 1_000_000_000, 2),
+        }

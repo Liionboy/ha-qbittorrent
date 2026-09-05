@@ -36,6 +36,7 @@ class QBittorrentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             transfer = await self.api.async_get_transfer_info()
             alt_speed_limits = await self.api.async_get_speed_limits_mode()
             download_limit = await self.api.async_get_download_limit()
+            upload_limit = await self.api.async_get_upload_limit()
         except QBittorrentApiError as err:
             raise UpdateFailed(str(err)) from err
 
@@ -46,6 +47,10 @@ class QBittorrentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "seeding": sum(_is_seeding(torrent) for torrent in torrents),
             "paused": sum(_is_paused(torrent) for torrent in torrents),
             "completed": sum(float(torrent.get("progress", 0)) >= 1 for torrent in torrents),
+            "active": sum(_is_active(torrent) for torrent in torrents),
+            "stalled": sum(_is_stalled(torrent) for torrent in torrents),
+            "errored": sum(_is_errored(torrent) for torrent in torrents),
+            "total_size": sum(float(torrent.get("total_size", 0)) for torrent in torrents),
         }
         return {
             "main": main,
@@ -53,6 +58,7 @@ class QBittorrentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "counts": counts,
             "alt_speed_limits": alt_speed_limits,
             "download_limit": download_limit,
+            "upload_limit": upload_limit,
         }
 
 
@@ -66,3 +72,30 @@ def _is_seeding(torrent: dict[str, Any]) -> bool:
 
 def _is_paused(torrent: dict[str, Any]) -> bool:
     return torrent.get("state") in {"pausedDL", "pausedUP", "stoppedDL", "stoppedUP"}
+
+
+def _is_active(torrent: dict[str, Any]) -> bool:
+    return torrent.get("state") in {
+        "allocating",
+        "checkingDL",
+        "checkingUP",
+        "downloading",
+        "forcedDL",
+        "forcedUP",
+        "metaDL",
+        "moving",
+        "queuedDL",
+        "queuedUP",
+        "stalledDL",
+        "stalledUP",
+        "uploading",
+        "checkingResumeData",
+    }
+
+
+def _is_stalled(torrent: dict[str, Any]) -> bool:
+    return torrent.get("state") in {"stalledDL", "stalledUP"}
+
+
+def _is_errored(torrent: dict[str, Any]) -> bool:
+    return torrent.get("state") in {"error", "missingFiles"}
