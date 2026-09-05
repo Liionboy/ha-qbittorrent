@@ -5,6 +5,8 @@
 
 Modern Home Assistant custom integration for the qBittorrent WebUI API v2. It is a clean-room implementation inspired by the older YAML component at [radsonpatrick/qbittorrent_custom_component](https://github.com/radsonpatrick/qbittorrent_custom_component), with no code copied from it.
 
+Current release: **1.0.1**.
+
 ## Features
 
 - UI configuration through **Settings → Devices & services → Add integration**.
