@@ -56,6 +56,10 @@ class QBittorrentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "main": main,
             "transfer": transfer,
             "counts": counts,
+            "torrents": [
+                _torrent_details(torrent_hash, torrent)
+                for torrent_hash, torrent in main.get("torrents", {}).items()
+            ],
             "alt_speed_limits": alt_speed_limits,
             "download_limit": download_limit,
             "upload_limit": upload_limit,
@@ -99,3 +103,35 @@ def _is_stalled(torrent: dict[str, Any]) -> bool:
 
 def _is_errored(torrent: dict[str, Any]) -> bool:
     return torrent.get("state") in {"error", "missingFiles"}
+
+
+def _torrent_details(torrent_hash: str, torrent: dict[str, Any]) -> dict[str, Any]:
+    """Return the torrent fields needed by the frontend card."""
+    return {
+        "hash": torrent_hash,
+        "name": torrent.get("name", ""),
+        "state": torrent.get("state", "unknown"),
+        "progress": torrent.get("progress", 0),
+        "eta": torrent.get("eta", 0),
+        "size": torrent.get("size", 0),
+        "total_size": torrent.get("total_size", 0),
+        "amount_left": torrent.get("amount_left", 0),
+        "downloaded": torrent.get("downloaded", 0),
+        "uploaded": torrent.get("uploaded", 0),
+        "download_speed": torrent.get("dlspeed", 0),
+        "upload_speed": torrent.get("upspeed", 0),
+        "ratio": torrent.get("ratio", 0),
+        "availability": torrent.get("availability", 0),
+        "seeds": torrent.get("num_seeds", 0),
+        "leechers": torrent.get("num_leechs", 0),
+        "category": torrent.get("category", ""),
+        "tags": torrent.get("tags", ""),
+        "tracker": torrent.get("tracker", ""),
+        "save_path": torrent.get("save_path", ""),
+        "content_path": torrent.get("content_path", ""),
+        "added_on": torrent.get("added_on", 0),
+        "completion_on": torrent.get("completion_on", 0),
+        "seeding_time": torrent.get("seeding_time", 0),
+        "time_active": torrent.get("time_active", 0),
+        "private": torrent.get("isPrivate", False),
+    }

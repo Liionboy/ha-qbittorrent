@@ -194,4 +194,5 @@ class QBittorrentSensor(QBittorrentEntity, SensorEntity):
             "stalled_torrents": counts["stalled"],
             "errored_torrents": counts["errored"],
             "total_size_gb": round(counts["total_size"] / 1_000_000_000, 2),
+            "torrents": data.get("torrents", []),
         }
